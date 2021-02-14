@@ -44,7 +44,7 @@ const getError = (errorText) => {
   const imgGallery = document.getElementById('img-gallery');
   imgGallery.innerHTML = errorText;
   loadingSpiner();
-}
+};
 
 let slideIndex = 0;
 const selectItem = (event, img) => {
