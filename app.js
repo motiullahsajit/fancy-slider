@@ -6,12 +6,8 @@ const sliderBtn = document.getElementById('create-slider');
 const sliderContainer = document.getElementById('sliders');
 // selected image 
 let sliders = [];
-
-
-// If this key doesn't work
-// Find the name in the url and go to their website
-// to create your own api key
-const KEY = '15674931-a9d714b6e9d654524df198e00&q';
+// api key
+const key = '20265305-e80c7c18384a3112d54a1da8f';
 
 // show images 
 const showImages = (images) => {
@@ -25,68 +21,92 @@ const showImages = (images) => {
     div.innerHTML = ` <img class="img-fluid img-thumbnail" onclick=selectItem(event,"${image.webformatURL}") src="${image.webformatURL}" alt="${image.tags}">`;
     gallery.appendChild(div)
   })
-
+  loadingSpiner();
 }
 
 const getImages = (query) => {
-  fetch(`https://pixabay.com/api/?key=${KEY}=${query}&image_type=photo&pretty=true`)
+  loadingSpiner();
+  fetch(`https://pixabay.com/api/?key=${key}&q=${query}+flowers&image_type=photo&pretty=true`)
     .then(response => response.json())
-    .then(data => showImages(data.hitS))
-    .catch(err => console.log(err))
+    .then(data => {
+      if (data.hits) {
+        showImages(data.hits)
+      }
+      else {
+        console.log('nothing found')
+        getError(`<h1 class="text-center text-danger">Sorry No Result Found!!</h1>`)
+      }
+    })
+    .catch(err => getError(`<h1 class="text-center text-danger">Sorry failed to load data!!</h1>`))
+};
+
+const getError = (errorText) => {
+  const imgGallery = document.getElementById('img-gallery');
+  imgGallery.innerHTML = errorText;
+  loadingSpiner();
 }
 
 let slideIndex = 0;
 const selectItem = (event, img) => {
   let element = event.target;
   element.classList.add('added');
- 
+
   let item = sliders.indexOf(img);
   if (item === -1) {
     sliders.push(img);
   } else {
-    alert('Hey, Already added !')
+    delete sliders[item];
+    element.classList.toggle('added');
   }
-}
+};
+
 var timer
 const createSlider = () => {
   // check slider image length
   if (sliders.length < 2) {
-    alert('Select at least 2 image.')
+    alert('Select at least 2 images.')
     return;
   }
-  // crate slider previous next area
-  sliderContainer.innerHTML = '';
-  const prevNext = document.createElement('div');
-  prevNext.className = "prev-next d-flex w-100 justify-content-between align-items-center";
-  prevNext.innerHTML = ` 
+
+  let duration = document.getElementById('duration').value * 1000 || 2000;
+  if (duration <= 0) {
+    alert('Duration value cannot be negative, please enter a positive value');
+  }
+  else {
+    // crate slider previous next area
+    sliderContainer.innerHTML = '';
+    const prevNext = document.createElement('div');
+    prevNext.className = "prev-next d-flex w-100 justify-content-between align-items-center";
+    prevNext.innerHTML = ` 
   <span class="prev" onclick="changeItem(-1)"><i class="fas fa-chevron-left"></i></span>
   <span class="next" onclick="changeItem(1)"><i class="fas fa-chevron-right"></i></span>
   `;
 
-  sliderContainer.appendChild(prevNext)
-  document.querySelector('.main').style.display = 'block';
-  // hide image aria
-  imagesArea.style.display = 'none';
-  const duration = document.getElementById('duration').value || 1000;
-  sliders.forEach(slide => {
-    let item = document.createElement('div')
-    item.className = "slider-item";
-    item.innerHTML = `<img class="w-100"
-    src="${slide}"
-    alt="">`;
-    sliderContainer.appendChild(item)
-  })
-  changeSlide(0)
-  timer = setInterval(function () {
-    slideIndex++;
-    changeSlide(slideIndex);
-  }, duration);
-}
+    sliderContainer.appendChild(prevNext)
+    document.querySelector('.main').style.display = 'block';
+    // hide image aria
+    imagesArea.style.display = 'none';
+    sliders.forEach(slide => {
+      let item = document.createElement('div')
+      item.className = "slider-item";
+      item.innerHTML = `<img class="w-100"
+        src="${slide}"
+        alt="">`;
+      sliderContainer.appendChild(item)
+    })
+    changeSlide(0)
+    timer = setInterval(function () {
+      slideIndex++;
+      changeSlide(slideIndex);
+    }, duration);
+
+  }
+};
 
 // change slider index 
 const changeItem = index => {
   changeSlide(slideIndex += index);
-}
+};
 
 // change slide item
 const changeSlide = (index) => {
@@ -107,7 +127,7 @@ const changeSlide = (index) => {
   })
 
   items[index].style.display = "block"
-}
+};
 
 searchBtn.addEventListener('click', function () {
   document.querySelector('.main').style.display = 'none';
@@ -115,8 +135,29 @@ searchBtn.addEventListener('click', function () {
   const search = document.getElementById('search');
   getImages(search.value)
   sliders.length = 0;
-})
+});
 
 sliderBtn.addEventListener('click', function () {
   createSlider()
-})
+});
+
+//enter button funtion
+document.getElementById('search').addEventListener('keypress', function (event) {
+  if (event.key == 'Enter') {
+    searchBtn.click();
+  }
+});
+duration.addEventListener('keypress', function (event) {
+  if (event.key == 'Enter') {
+    sliderBtn.click();
+  }
+});
+
+//loading spiner function
+const loadingSpiner = () => {
+  const spinner = document.getElementById('loading-spinner');
+  const imgGallery = document.getElementById('img-gallery');
+  spinner.classList.toggle('d-none');
+  spinner.classList.toggle('d-flex');
+  imgGallery.classList.toggle('d-none')
+};
